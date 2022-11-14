@@ -1,30 +1,42 @@
-from django.urls import include, path
-from rest_framework import routers
+from django.urls import path
 from project import views
+from django.urls import path, include
+#from rest_framework.authtoken import views
+
+#from .views import LoginAPI
+
+
+
 from project.views import *
-from rest_framework import routers
+#from .views import LoginAPI, RegisterAPI, UserAPI
+
+#from .views import UserAPIView, RegisterAPIView, LoginAPIView
 
 
-router = routers.DefaultRouter()
-router.register(r'users', views.UserViewSet)
-router.register(r'groups', views.GroupViewSet)
-'''router = routers.SimpleRouter()
-router.register(r'accounts', views.AccountViewSet)'''
+
+#from rest_framework.authtoken import views
 
 
-# Wire up our API using automatic URL routing.
-# Additionally, we include login URLs for the browsable API.
+
 urlpatterns = [
-    path('', include(router.urls)),
-    path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
-    path('api/', TodoListApiView.as_view()),
-    path('api/<int:todo_id>/', TodoDetailApiView.as_view())
+   
+    path('users/', UserList.as_view()),
+    path('users/<int:pk>/', UserDetail.as_view()), 
+    
+    
+    
+  
+    path('ex/', ExampleView.as_view()),
+    path('custom/', CustomAuthToken.as_view()),
+    
+    
+    path('product/', productlist.as_view()),
+    path('product/<int:pk>/', productdetail.as_view()),
+    
+    path("get-details",UserDetailAPI.as_view()),
+    path('register',RegisterUserAPIView.as_view()),
+    
+    path('log/', LoginView.as_view()),
+
 ]
-
-#from django.conf.urls import url
-#from django.urls import path, include
-#from .views import (
-   # TodoListApiView,
-#)
-
-
+    
