@@ -1,5 +1,4 @@
 from project.serializers import * 
-
 from rest_framework import generics
 from django.contrib.auth.models import User
 from rest_framework.permissions import IsAuthenticated
@@ -60,8 +59,6 @@ class CustomAuthToken(ObtainAuthToken):
 # Get User API
 class UserAPI(generics.RetrieveAPIView):
     permission_classes = [IsAuthenticated]
-
-
     def get_object(self):
         return self.request.user
     
@@ -121,8 +118,6 @@ class UserDetailAPI(APIView):
   #permission_classes = (AllowAny,)
   permission_classes = [IsAuthenticated]
   def get(self,request,*args,**kwargs):
-    print("Hiiiiiiiiiiii")
-    print(self.request.user)
     user = User.objects.get(id=request.user.id)
     serializer = UserSerializer(user)
     return Response(serializer.data)
@@ -143,9 +138,7 @@ class LoginView(views.APIView):
         data = request.data
         username = data.get('username', None)
         password = data.get('password', None)
-
         user = authenticate(username=username, password=password)
-
         if user is not None:
             if user.is_active:
                 login(request, user)
