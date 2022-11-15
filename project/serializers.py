@@ -15,7 +15,7 @@ from django.contrib.auth.models import User
 from rest_framework import serializers
 
 User._meta.get_field('email')._unique = True
-
+from rest_framework.decorators import action
 
 
 
@@ -42,9 +42,12 @@ class ProductSerializer((serializers.ModelSerializer)):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ["id", "first_name", "last_name", "username"]
+        fields = ["id", "first_name", "last_name", "username", "password"]
 
+    def create(self, validated_data):
+        return User.objects.create(**validated_data)
 
+        
 # Serializer to Register User
 class RegisterSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(
@@ -54,16 +57,17 @@ class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(
         write_only=True, required=True, validators=[validate_password])
     password2 = serializers.CharField(write_only=True, required=True)
-
+    token = serializers.SerializerMethodField('get_user_token')
+    
     class Meta:
         model = User
         fields = ('username', 'password', 'password2',
-                  'email', 'first_name', 'last_name')
+                  'email', 'first_name', 'last_name', 'token')
         extra_kwargs = {
             'first_name': {'required': True},
             'last_name': {'required': True}
         }
-        token = serializers.SerializerMethodField('get_user_token')
+        
 
     def validate(self, attrs):
         if attrs['password'] != attrs['password2']:
@@ -81,11 +85,6 @@ class RegisterSerializer(serializers.ModelSerializer):
         )
         user.set_password(validated_data['password'])
         user.save()
-
-       # token, create = Token.objects.get_or_create(user=user)
-       # print(token)
-        # return user
-        
-
+        return user
     def get_user_token(self, obj):
         return Token.objects.get_or_create(user=obj)[0].key
