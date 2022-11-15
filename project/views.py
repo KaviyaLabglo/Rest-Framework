@@ -1,54 +1,55 @@
-from project.serializers import * 
+from .serializers import UserSerializer, RegisterSerializer
+from project.models import *
+from rest_framework import views
+from django.contrib.auth import login
+from rest_framework.authentication import TokenAuthentication
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework.permissions import AllowAny
+from rest_framework import permissions
+from .serializers import ProductSerializer
+from rest_framework import mixins
+from project.serializers import *
 from rest_framework import generics
 from django.contrib.auth.models import User
 from rest_framework.permissions import IsAuthenticated
+
 
 class UserList(generics.ListAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticated]
 
+
 class UserDetail(generics.RetrieveAPIView):
     queryset = User.objects.all()
-    permission_classes = [IsAuthenticated]
     serializer_class = UserSerializer
-    
-    
-   
-        
-        
-        
 
-
-    
-    
-from rest_framework import mixins
-from rest_framework import generics
-from .serializers import ProductSerializer
-from project.models import * 
 
 class productlist(mixins.ListModelMixin,
                   mixins.CreateModelMixin,
                   generics.GenericAPIView):
     queryset = product.objects.all()
     serializer_class = ProductSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
    # permission_classes = [IsAuthenticated]
-    
+
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
         return self.create(request, *args, **kwargs)
-    
-    
+
+
 class productdetail(mixins.RetrieveModelMixin,
                     mixins.UpdateModelMixin,
                     mixins.DestroyModelMixin,
                     generics.GenericAPIView):
     queryset = product.objects.all()
     serializer_class = ProductSerializer
-    print(queryset)
-   
+    #permission_classes = [IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
     def get(self, request, *args, **kwargs):
         return self.retrieve(request, *args, **kwargs)
 
@@ -57,41 +58,33 @@ class productdetail(mixins.RetrieveModelMixin,
 
     def delete(self, request, *args, **kwargs):
         return self.destroy(request, *args, **kwargs)
-    
-    
-    
 
-
-from rest_framework.permissions import AllowAny
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from .serializers import UserSerializer,RegisterSerializer
-from django.contrib.auth.models import User
-from rest_framework.authentication import TokenAuthentication
-from rest_framework import generics
 
 # Class based view to Get User Details using Token Authentication
+
+
 class UserDetailAPI(APIView):
-  #authentication_classes = (TokenAuthentication,)
-  #permission_classes = (AllowAny,)
-  permission_classes = [IsAuthenticated]
-  def get(self,request,*args,**kwargs):
-    user = User.objects.get(id=request.user.id)
-    serializer = UserSerializer(user)
-    return Response(serializer.data)
+    #permission_classes = (AllowAny,)
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
-#Class based view to register user
+    def get(self, request, *args, **kwargs):
+        user = User.objects.get(id=request.user.id)
+        serializer = UserSerializer(user)
+        return Response(serializer.data)
+
+# Class based view to register user
+
+
 class RegisterUserAPIView(generics.CreateAPIView):
-  permission_classes = (AllowAny,)
-  serializer_class = RegisterSerializer
+    queryset = User.objects.all()
+    permission_classes = (AllowAny,)
+    serializer_class = RegisterSerializer
 
-  
-  
-from django.contrib.auth import login
-from rest_framework import views
 
 class LoginView(views.APIView):
     authentication_classes = (TokenAuthentication,)
+    serializer_class = LoginSerializer
+
     def post(self, request, format=None):
         data = request.data
         username = data.get('username', None)
@@ -106,4 +99,64 @@ class LoginView(views.APIView):
                 return Response(status=status.HTTP_404_NOT_FOUND)
         else:
             return Response(status=status.HTTP_404_NOT_FOUND)
+        
+        
+
+from rest_framework import viewsets
+from rest_framework.decorators import action, renderer_classes
+from rest_framework import permissions, renderers, viewsets
+from django.shortcuts import get_object_or_404
+
+
+class UserViewSet(viewsets.ViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    def list(self, request):
+        queryset = User.objects.all()
+        serializer = UserSerializer(queryset, many=True)
+        return Response(serializer.data)
+
+    
+    def retrieve(self, request, pk=None):
+        queryset = User.objects.all()
+        user = get_object_or_404(queryset, pk=pk)
+        serializer = UserSerializer(user)
+        return Response(serializer.data)
+
+
+
+    def destroy(self, request, pk=None):
+        d = User.objects.filter(id=pk).delete()
+        print(d)
+        serializer = UserSerializer(self.request.user)
+        return Response(serializer.data)
+    def create(self, request):
+        serializer = UserSerializer(data = request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        
+    def update(self, request, pk= None):
+        user_obj = User.objects.get(id=pk)
+        serializer = UserSerializer(user_obj, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+    def partial_update(self, request, pk= None):
+        user_obj = User.objects.get(id=pk)
+        serializer = UserSerializer(user_obj, data=request.data, partial = True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        
+    
    
+
+        
+    
