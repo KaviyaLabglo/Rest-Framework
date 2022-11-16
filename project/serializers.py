@@ -14,9 +14,6 @@ from django.contrib.auth.models import User
 
 from rest_framework import serializers
 
-User._meta.get_field('email')._unique = True
-from rest_framework.decorators import action
-
 
 
 
@@ -30,23 +27,27 @@ class LoginSerializer(serializers.Serializer):
             return user
         raise serializers.ValidationError("Incorrect Credentials")
 
+class BrandSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = Brand
+        fields = ['url',"id"]
 
-class ProductSerializer((serializers.ModelSerializer)):
+class ProductSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = product
-        fields = "__all__"
+        fields =['url',"title", "id", "brand","price", "image", "availability", "color"]
 
 
 # Serializer to Get User Details using Django Token Authentication
 
 class UserSerializer(serializers.ModelSerializer):
+    token = serializers.SerializerMethodField('get_user_token')
     class Meta:
         model = User
-        fields = ["id", "first_name", "last_name", "username", "password"]
-
-    def create(self, validated_data):
-        return User.objects.create(**validated_data)
-
+        fields = ["id", "first_name", "last_name", "username", "password","token"]
+        
+    def get_user_token(self, obj):
+        return Token.objects.get_or_create(user=obj)[0].key
         
 # Serializer to Register User
 class RegisterSerializer(serializers.ModelSerializer):
@@ -63,10 +64,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         model = User
         fields = ('username', 'password', 'password2',
                   'email', 'first_name', 'last_name', 'token')
-        extra_kwargs = {
-            'first_name': {'required': True},
-            'last_name': {'required': True}
-        }
+        
         
 
     def validate(self, attrs):
