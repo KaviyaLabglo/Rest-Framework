@@ -30,13 +30,12 @@ class LoginSerializer(serializers.Serializer):
 class BrandSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Brand
-        fields = ['url',"id"]
+        fields = "__all__"
 
 class ProductSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = product
-        fields =['url',"title", "id", "brand","price", "image", "availability", "color"]
-
+        fields ="__all__"
 
 # Serializer to Get User Details using Django Token Authentication
 
@@ -48,16 +47,20 @@ class UserSerializer(serializers.ModelSerializer):
         
     def get_user_token(self, obj):
         return Token.objects.get_or_create(user=obj)[0].key
+    
+    
+    
+    
         
 # Serializer to Register User
 class RegisterSerializer(serializers.ModelSerializer):
-    email = serializers.EmailField(
-        required=True,
-        validators=[UniqueValidator(queryset=User.objects.all())]
-    )
-    password = serializers.CharField(
-        write_only=True, required=True, validators=[validate_password])
+    
+    email = serializers.EmailField(required=True,validators=[UniqueValidator(queryset=User.objects.all())])
+    
+    password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
+    
     password2 = serializers.CharField(write_only=True, required=True)
+    
     token = serializers.SerializerMethodField('get_user_token')
     
     class Meta:
